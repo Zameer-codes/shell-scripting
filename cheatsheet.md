@@ -264,3 +264,396 @@ curl -I -m 10 https://service.com  # Quick health check with timeout
 # Log rotation emergency
 > /var/log/large.log           # Truncate log file (use carefully!)
 ```
+
+
+# Flags/Options 
+# Complete `find` Command Guide
+
+## 🔍 Basic Syntax
+```bash
+find [path] [expression] [action]
+```
+
+## 📂 Path Options
+```bash
+find .                    # Search current directory
+find /home/user           # Search specific directory
+find /var/log /tmp        # Search multiple directories
+find ~                    # Search home directory
+find /                    # Search entire filesystem (be careful!)
+```
+
+## 🎯 Name-based Search Options
+
+### `-name` (Case Sensitive)
+```bash
+find . -name "*.py"           # All Python files
+find . -name "config.json"    # Exact filename
+find . -name "test*"          # Files starting with "test"
+find . -name "*log*"          # Files containing "log"
+find . -name "?.txt"          # Single character + .txt
+```
+
+### `-iname` (Case Insensitive)
+```bash
+find . -iname "*.PDF"         # Finds both .pdf and .PDF
+find . -iname "readme*"       # Finds README, readme, ReadMe, etc.
+```
+
+### `-path` and `-ipath` (Full Path Matching)
+```bash
+find . -path "*/node_modules/*"     # Files in node_modules anywhere
+find . -path "*/src/*.js"           # JS files in src directories
+find . -ipath "**/BUILD/**"         # Case insensitive path search
+```
+
+## 📁 Type-based Search Options
+
+### `-type` (File Types)
+```bash
+find . -type f              # Regular files only
+find . -type d              # Directories only
+find . -type l              # Symbolic links only
+find . -type s              # Sockets
+find . -type p              # Named pipes (FIFOs)
+find . -type c              # Character devices
+find . -type b              # Block devices
+```
+
+### Practical Type Examples
+```bash
+find /var/log -type f -name "*.log"    # Log files only (not directories)
+find . -type d -name "*test*"          # Test directories
+find . -type l                         # Find all symlinks
+```
+
+## 📏 Size-based Search Options
+
+### `-size` (File Size)
+```bash
+find . -size +100M          # Files larger than 100 MB
+find . -size -1k            # Files smaller than 1 KB
+find . -size 50c            # Files exactly 50 bytes
+find . -size +1G            # Files larger than 1 GB
+find . -size +100M -size -1G  # Files between 100MB and 1GB
+```
+
+**Size Units:**
+- `c` = bytes
+- `k` = kilobytes (1024 bytes)
+- `M` = megabytes (1024 KB)
+- `G` = gigabytes (1024 MB)
+- `T` = terabytes (1024 GB)
+
+## ⏰ Time-based Search Options
+
+### `-mtime` (Modification Time in Days)
+```bash
+find . -mtime -7            # Modified in last 7 days
+find . -mtime +30           # Modified more than 30 days ago
+find . -mtime 1             # Modified exactly 1 day ago
+```
+
+### `-mmin` (Modification Time in Minutes)
+```bash
+find . -mmin -60            # Modified in last 60 minutes
+find . -mmin +120           # Modified more than 120 minutes ago
+```
+
+### `-atime` and `-amin` (Access Time)
+```bash
+find . -atime -1            # Accessed in last day
+find . -amin -30            # Accessed in last 30 minutes
+```
+
+### `-ctime` and `-cmin` (Change Time - metadata changes)
+```bash
+find . -ctime -1            # Metadata changed in last day
+find . -cmin -60            # Metadata changed in last 60 minutes
+```
+
+### `-newer` (Newer than Reference File)
+```bash
+find . -newer reference.txt    # Files newer than reference.txt
+find . -type f -newer /etc/passwd  # Files newer than /etc/passwd
+```
+
+## 🔐 Permission-based Search Options
+
+### `-perm` (Exact Permissions)
+```bash
+find . -perm 755            # Exactly 755 permissions
+find . -perm u=rwx,g=rx,o=rx  # Same as above, symbolic notation
+```
+
+### `-perm -` (At Least These Permissions)
+```bash
+find . -perm -644           # At least readable by owner/group, readable by others
+find . -perm -u+w           # At least writable by owner
+```
+
+### `-perm /` (Any of These Permissions)
+```bash
+find . -perm /222           # Writable by anyone (owner, group, or others)
+find . -perm /u+w,g+w,o+w   # Same as above, symbolic notation
+```
+
+### Security-focused Permission Searches
+```bash
+find . -perm 777            # World-writable files (security risk)
+find . -perm -4000          # Files with SUID bit set
+find . -perm -2000          # Files with SGID bit set
+find . -perm -1000          # Files with sticky bit set
+```
+
+## 👤 Ownership Search Options
+
+### `-user` and `-uid`
+```bash
+find . -user john           # Files owned by user 'john'
+find . -uid 1000            # Files owned by UID 1000
+find . -user $(whoami)      # Files owned by current user
+```
+
+### `-group` and `-gid`
+```bash
+find . -group developers    # Files owned by 'developers' group
+find . -gid 100             # Files owned by GID 100
+```
+
+### `-nouser` and `-nogroup`
+```bash
+find . -nouser              # Files with no valid user
+find . -nogroup             # Files with no valid group
+```
+
+## 🔧 Depth and Traversal Options
+
+### `-maxdepth` and `-mindepth`
+```bash
+find . -maxdepth 1 -name "*.txt"    # Only in current directory
+find . -maxdepth 3 -type d          # Directories up to 3 levels deep
+find . -mindepth 2 -name "*.py"     # Start searching from 2 levels down
+```
+
+### `-prune` (Skip Directories)
+```bash
+find . -name node_modules -prune -o -name "*.js" -print
+# Skip node_modules directories when searching for JS files
+
+find . -path "*/.*" -prune -o -type f -print
+# Skip hidden directories
+```
+
+## 🎯 Logical Operators
+
+### `-and` (or just space)
+```bash
+find . -name "*.py" -and -size +1k     # Python files larger than 1KB
+find . -name "*.py" -size +1k          # Same as above (implicit AND)
+```
+
+### `-or`
+```bash
+find . -name "*.py" -or -name "*.js"   # Python OR JavaScript files
+find . \( -name "*.py" -or -name "*.js" \) -and -size +1k
+# Python or JS files that are larger than 1KB
+```
+
+### `-not` (or `!`)
+```bash
+find . -not -name "*.tmp"              # Everything except .tmp files
+find . ! -name "*.tmp"                 # Same as above
+find . -type f -not -path "*/node_modules/*"  # Files not in node_modules
+```
+
+## 🚀 Action Options
+
+### `-print` (Default Action)
+```bash
+find . -name "*.py" -print          # Print found files (default)
+find . -name "*.py" -print0         # Print with null separator (safe for spaces)
+```
+
+### `-ls` (Detailed Listing)
+```bash
+find . -name "*.py" -ls             # Show detailed info like 'ls -l'
+```
+
+### `-exec` (Execute Command)
+```bash
+find . -name "*.py" -exec ls -l {} \;           # Run 'ls -l' on each file
+find . -name "*.py" -exec grep -l "import" {} \; # Find files containing "import"
+find . -name "*.tmp" -exec rm {} \;             # Delete all .tmp files
+find . -name "*.py" -exec cp {} backup/ \;      # Copy all .py files to backup/
+
+# More efficient with + (runs command once with multiple files)
+find . -name "*.py" -exec ls -l {} +
+find . -name "*.tmp" -exec rm {} +
+```
+
+### `-execdir` (Execute in File's Directory)
+```bash
+find . -name "Makefile" -execdir make clean \;  # Run 'make clean' in each directory
+```
+
+### `-ok` (Interactive Execute)
+```bash
+find . -name "*.tmp" -ok rm {} \;    # Ask before deleting each file
+```
+
+### `-delete` (Delete Files)
+```bash
+find . -name "*.tmp" -delete         # Delete all .tmp files
+find . -type d -empty -delete        # Delete empty directories
+```
+
+## 📊 Advanced Examples for Development
+
+### Find Large Files in Project
+```bash
+find . -type f -size +50M -exec ls -lh {} \; | sort -k5 -hr
+```
+
+### Find Recently Modified Source Files
+```bash
+find . \( -name "*.py" -o -name "*.js" -o -name "*.java" \) -mtime -7
+```
+
+### Find Executable Files
+```bash
+find . -type f -executable -name "*"
+```
+
+### Find Files Modified After Last Git Commit
+```bash
+find . -type f -newer .git/COMMIT_EDITMSG -not -path "./.git/*"
+```
+
+### Find Duplicate File Names (Different Directories)
+```bash
+find . -type f -printf '%f\n' | sort | uniq -d
+```
+
+### Clean Up Development Environment
+```bash
+# Find and delete node_modules directories
+find . -name "node_modules" -type d -exec rm -rf {} +
+
+# Find Python cache directories
+find . -name "__pycache__" -type d -delete
+
+# Find and delete compiled files
+find . \( -name "*.pyc" -o -name "*.class" -o -name "*.o" \) -delete
+```
+
+### Security Auditing
+```bash
+# Find world-writable files
+find . -type f -perm -002
+
+# Find SUID/SGID files
+find / -type f \( -perm -4000 -o -perm -2000 \) 2>/dev/null
+
+# Find files with no owner
+find . -nouser -nogroup
+```
+
+## 🔥 Pro Tips for MAANG/FAANG Interviews
+
+1. **Combine with other commands:**
+   ```bash
+   find . -name "*.log" -exec grep -l "ERROR" {} \; | wc -l
+   ```
+
+2. **Use parentheses for complex logic:**
+   ```bash
+   find . \( -name "*.py" -o -name "*.js" \) -and -not -path "*/node_modules/*"
+   ```
+
+3. **Handle filenames with spaces:**
+   ```bash
+   find . -name "*.txt" -print0 | xargs -0 ls -l
+   ```
+
+4. **Performance considerations:**
+   - Use `-maxdepth` to limit search scope
+   - Use `-prune` to skip unnecessary directories
+   - Use `find ... -exec command {} +` instead of `find ... -exec command {} \;` for better performance
+
+5. **Always test destructive commands:**
+```bash
+# Test first
+find . -name "*.tmp" -print
+# Then execute
+find . -name "*.tmp" -delete
+```
+
+
+# ls Command Flags Reference
+## Basic Display Options
+```bash
+-l = Long format (detailed info: permissions, owner, size, date)
+-a = All files (including hidden files starting with .)
+-A = Almost all (like -a but excludes . and ..)
+-d = Directory itself (don't list contents, just show directory info)
+-h = Human readable sizes (1K, 234M, 2G instead of bytes)
+-f = Don't sort, list in directory order (fastest)
+```
+
+## Sorting Options
+```bash
+-t = Sort by modification time (newest first)
+-S = Sort by file size (largest first)
+-r = Reverse order
+-U = Don't sort (like -f but still format)
+```
+
+## Additional Info
+```bash
+-i = Show inode numbers
+-s = Show file sizes in blocks
+-n = Show numeric UID/GID instead of names
+-o = Long format without group info
+-g = Long format without owner info
+```
+
+## Display Format
+```bash
+-1 = One file per line
+-C = List in columns (default for terminal)
+-x = List in rows instead of columns
+-m = Comma-separated list
+```
+
+## File Type Indicators
+```bash
+-F = Add type indicators (/ for directories, * for executables, @ for symlinks)
+-p = Add / after directory names only
+--color = Colorize output (auto/always/never)
+```
+
+## Time Options
+```bash
+-u = Show access time instead of modification time
+-c = Show change time instead of modification time
+--full-time = Show full timestamp
+```
+
+## Common Combinations
+```bash
+bashls -la      # Long format + all files (most common)
+ls -lh      # Long format + human readable sizes
+ls -ltr     # Long format + sort by time + reverse (oldest first)
+ls -latr    # All files + long format + time sorted + reverse
+ls -lS      # Long format + sort by size
+ls -ld */   # Show only directories in long format
+```
+
+## Pro Development Combos
+```bash
+bashls -la | grep "^d"     # Show only directories
+ls -la | grep "\.py$"  # Show only Python files
+ls -ltr | tail -5      # Show 5 most recently modified files
+ls -lSh | head -10     # Show 10 largest files with readable sizes
+```
